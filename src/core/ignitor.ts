@@ -1,8 +1,9 @@
 import { Client, GatewayIntentBits, Partials } from "discord.js";
 import path from "path";
 import glob from "glob-promise";
-import { Register } from "./structure/register";
-import { BaseEvent } from "./structure/base-event";
+import { Register } from "./register";
+import { BaseEvent } from "./base-event";
+import { logger } from "../helpers/logger";
 
 export class Ignitor {
   public client: Client;
@@ -26,7 +27,7 @@ export class Ignitor {
    * Resolves all files in the src directory
    * @returns {Promise<string[]>}
    */
-  private async resolveFiles() {
+  private async resolveFiles(): Promise<string[]> {
     const srcPath = path.resolve(__dirname, "..");
     const files = await glob("**/*{.ts,.js}", { cwd: srcPath, absolute: true });
     return files;
@@ -46,19 +47,18 @@ export class Ignitor {
         if (!eventClass || !(eventClass.prototype instanceof BaseEvent)) continue;
         const metadata = Register.getMetadata(eventClass.prototype, "execute");
         if (!metadata || metadata.type !== "event") continue;
-        const eventInstance = new eventClass();
-        this.client.on(metadata.eventName, (...args) => eventInstance.execute(args));
+        this.client.on(metadata.eventName, (...args) => new eventClass().execute(args));
         eventCount++;
       } catch (error) {
-        console.error(`Error registering event from file ${file}`, error);
+        logger.error(`Error registering event from file ${file}`, error);
       }
     }
 
-    console.log(`${eventCount} events registered`);
+    logger.info(`${eventCount} events registered`);
   }
 
   public async init() {
-    console.log("Initializing bot...");
+    logger.info("Initializing bot...");
     await this.registerEvents();
     this.client.login(process.env.TOKEN);
   }
