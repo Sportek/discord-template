@@ -1,12 +1,14 @@
-import { Client, GatewayIntentBits, Partials } from "discord.js";
+import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
 import path from "path";
 import glob from "glob-promise";
 import { Register } from "./register";
 import { BaseEvent } from "./base-event";
 import { logger } from "../helpers/logger";
+import { BaseCommand } from "./base-command";
 
 export class Ignitor {
   public client: Client;
+  public commands: Collection<string, BaseCommand> = new Collection();
 
   constructor() {
     this.client = new Client({
@@ -57,9 +59,28 @@ export class Ignitor {
     logger.info(`${eventCount} events registered`);
   }
 
+  private async registerCommands(): Promise<void> {
+    const files = await this.resolveFiles();
+
+    for (const file of files) {
+      try {
+        const commandClass = await import(file).then((module) => module.default);
+        if (!commandClass || !(commandClass.prototype instanceof BaseCommand)) continue;
+        const metadata = Register.getMetadata(commandClass.prototype, "execute");
+        if (!metadata || metadata.type !== "command") continue;
+        this.commands.set(metadata.command.name, new commandClass());
+      } catch (error) {
+        logger.error(`Error registering command from file ${file}`, error);
+      }
+    }
+
+    logger.info(`${this.commands.size} commands registered`);
+  }
+
   public async init() {
     logger.info("Initializing bot...");
     await this.registerEvents();
+    await this.registerCommands();
     this.client.login(process.env.TOKEN);
   }
 }

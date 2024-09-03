@@ -1,11 +1,13 @@
-import { ClientEvents, SlashCommandBuilder } from "discord.js";
+import { ChatInputApplicationCommandData, ClientEvents, SlashCommandBuilder } from "discord.js";
 import "reflect-metadata";
 
 const metadataKey = Symbol("register");
 
 export class Register {
-  static command(target: any, command: SlashCommandBuilder) {
-    Reflect.defineMetadata(metadataKey, { type: "command", command }, target);
+  static command(command: SlashCommandBuilder | ChatInputApplicationCommandData) {
+    return function (target: any, propertyKey: string) {
+      Reflect.defineMetadata(metadataKey, { type: "command", command }, target, propertyKey);
+    };
   }
 
   static event(eventName: keyof ClientEvents) {
