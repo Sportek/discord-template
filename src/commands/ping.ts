@@ -1,5 +1,5 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
-import { BaseCommand } from "../core/base-command";
+import { BaseCommand } from "../core/commands";
 import { Register } from "../core/register";
 
 export default class PingCommand extends BaseCommand {
