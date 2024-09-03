@@ -10,9 +10,7 @@ export abstract class BaseEvent {
 }
 
 export class EventManager {
-  constructor(private client: Client) {
-    this.client = client;
-  }
+  constructor(private readonly client: Client) {}
 
   /**
    * Registers all events in the src directory
